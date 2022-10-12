@@ -1,0 +1,2 @@
+# ezslack
+Easy Slack Framework
