@@ -72,11 +72,11 @@ def route(request_type: RequestType):
         ):
             fields = extract_body_fields(request_type, body)
 
-            handler, mtd, args = handler_mtd_args
+            handler, mtd, args, kwargs = handler_mtd_args
             handler_instance = handler(
                 request_id, request_type, ack, body, client, respond, say, *fields
             )
-            getattr(handler_instance, mtd)(*args)
+            getattr(handler_instance, mtd)(*args, **kwargs)
 
     return handle
 

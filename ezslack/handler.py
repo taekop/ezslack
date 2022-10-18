@@ -17,18 +17,27 @@ class HandlerRegistry:
         """Save handler methods"""
         for func in handler.__dict__.values():
             if callable(func) and (_handle := getattr(func, "_handle")):
-                request_type, keyword = _handle
+                request_type, keywords = _handle
                 self.handlers.setdefault(request_type, [])
-                self.handlers[request_type].append((keyword, handler, func.__name__))
+                for keyword in keywords:
+                    self.handlers[request_type].append(
+                        (keyword, handler, func.__name__)
+                    )
 
     def search_handler(
         self, request_type: RequestType, request_id: str
-    ) -> Optional[Tuple[Type[Handler], str, List[str]]]:
+    ) -> Optional[Tuple[Type[Handler], str, List[str], Dict[str, str]]]:
         """Return matched handler class, method, and arguments"""
         if keyword_handler_methods := self.handlers.get(request_type):
             for keyword, handler, mtd in keyword_handler_methods:
                 if match := keyword.match(request_id):
-                    return (handler, mtd, list(match.groups()))
+                    kwargs = match.groupdict()
+                    args = [
+                        group
+                        for i, group in enumerate(match.groups(), 1)
+                        if i not in keyword.groupindex.values()
+                    ]
+                    return (handler, mtd, args, kwargs)
         return None
 
 
@@ -57,32 +66,35 @@ class Handler:
         HANDLER_REGISTRY.register_handler(cls)
 
 
-def handle(request_type: RequestType, keyword: Union[str, re.Pattern]):
+def handle(request_type: RequestType, *args):
     def decorator(function):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
             return function(*args, **kwargs)
 
-        nonlocal keyword
-        if isinstance(keyword, str):
-            keyword = re.compile("^" + keyword + "$")
-        wrapper._handle = (request_type, keyword)
+        nonlocal args
+        keywords = []
+        for keyword in args:
+            if isinstance(keyword, str):
+                keyword = re.compile("^" + keyword + "$")
+            keywords.append(keyword)
+        wrapper._handle = (request_type, keywords)
         return wrapper
 
     return decorator
 
 
-def action(keyword: Union[str, re.Pattern]):
-    return handle(RequestType.ACTION, keyword)
+def action(*args):
+    return handle(RequestType.ACTION, *args)
 
 
-def message(keyword: Union[str, re.Pattern]):
-    return handle(RequestType.MESSAGE, keyword)
+def message(*args):
+    return handle(RequestType.MESSAGE, *args)
 
 
-def view_submission(keyword: Union[str, re.Pattern]):
-    return handle(RequestType.VIEW_SUBMISSION, keyword)
+def view_submission(*args):
+    return handle(RequestType.VIEW_SUBMISSION, *args)
 
 
-def view_closed(keyword: Union[str, re.Pattern]):
-    return handle(RequestType.VIEW_CLOSED, keyword)
+def view_closed(*args):
+    return handle(RequestType.VIEW_CLOSED, *args)

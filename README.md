@@ -19,27 +19,36 @@ app = App(token=SLACK_BOT_TOKEN)
 app.start_socket_mode(SLACK_APP_TOKEN)
 ```
 
-## Example
+## Handler
+
+Whenever subclass of `Handler` is defined, handler methods are registered in [`HANDLER_REGISTRY`](ezslack/handler.py#L44). String arguments in handler decorator are automatically converted into regex pattern with anchors. Matched groups are passed to arguments and keyword arguments whether they are named.
 
 ```python
 from ezslack import Handler, message
 
 class MyHandler(Handler):
-    @message("hello (\w+)")
-    def on_hello_name(self, name):
+    @message("hello", "hi")
+    def greet(self):
         self.ack()
-        self.client.chat_postMessage(
-            channel=self.channel_id,
+        self.say(
+            f"Nice to meet you <@{self.user_id}>",
             thread_ts=self.thread_ts,
-            text=f"Nice to meet you {name}",
         )
+
+    @message(r"(?P<first>\w+)(?P<op>[+*])(?P<second>\w+)")
+    def calculate(self, first, second, op):
+        if op == "+":
+            result = int(first) + int(second)
+        else:
+            result = int(first) * int(second)
+        self.say(f"Result: {result}", thread_ts=self.thread_ts)
 ```
 
 ## Template
 
 You can create `Template` and assign values later. `Template` is `render(**kwargs)` ed by passing binding arguments and corresponding `Expr` expressions are evaluated with those bindings.
 
-On the otherhand, dynamic-size list can be created using `TemplateList`. Instantiating with `iterable: Expr`, `name: str`, `template: Template`, when `iterable` is evaluated into the items, each item is passed into `template` as `name` declared.
+On the otherhand, dynamic-size list can be created using `TemplateList`. Instantiating with `iterable: Expr`, `name: str`, `template: Template`, when `iterable` is evaluated to the items, each item is passed to `template` as `name` declared.
 
 ```python
 from ezslack.schema import Expr, Option, StaticSelect, TemplateList, Text
