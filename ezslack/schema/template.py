@@ -16,9 +16,12 @@ T = TypeVar("T", bound=PydanticBaseModel)
 @dataclass
 class Template(Generic[T]):
     example: T
+    locals: Dict[str, Any]
     sub_templates: Dict[str, Union[list, Expr, Template, TemplateList]]
 
     def render(self, **locals) -> T:
+        locals.update(self.locals)
+
         def _render(obj, locals):
             if isinstance(obj, list):
                 return [_render(item, locals) for item in obj]
@@ -39,6 +42,9 @@ class Template(Generic[T]):
         if err:
             raise err
         return output
+
+    def update_locals(self, **locals):
+        self.locals.update(locals)
 
 
 @dataclass

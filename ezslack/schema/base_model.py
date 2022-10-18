@@ -57,4 +57,4 @@ class BaseModel(PydanticBaseModel):
                 sub_templates[k] = v
             else:
                 example.__setattr__(k, v)
-        return Template(example, sub_templates)
+        return Template(example, {}, sub_templates)

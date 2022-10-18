@@ -4,12 +4,18 @@ from ezslack.schema import Expr, Option, OptionGroup, Section, TemplateList, Tex
 
 
 class TemplateTest(TestCase):
-    def test_text(self):
+    def test_render_expr(self):
         text_template = Text.template(text=Expr("data['text']"))
         text = text_template.render(data={"text": "ezslack"})
         self.assertEqual(Text(type="plain_text", text="ezslack"), text)
 
-    def test_option_group(self):
+    def test_update_locals(self):
+        text_template = Text.template(text=Expr("data['text']"))
+        text_template.update_locals(data={"text": "ezslack"})
+        text = text_template.render()
+        self.assertEqual(Text(type="plain_text", text="ezslack"), text)
+
+    def test_render_template_list(self):
         option_group_template = OptionGroup.template(
             label=Text(type="plain_text", text="ezslack"),
             options=TemplateList(
