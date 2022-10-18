@@ -16,7 +16,7 @@ class HandlerRegistry:
     def register_handler(self, handler: Type[Handler]):
         """Save handler methods"""
         for func in handler.__dict__.values():
-            if callable(func) and (_handle := getattr(func, "_handle")):
+            if callable(func) and (_handle := getattr(func, "_handle", None)):
                 request_type, keywords = _handle
                 self.handlers.setdefault(request_type, [])
                 for keyword in keywords:
