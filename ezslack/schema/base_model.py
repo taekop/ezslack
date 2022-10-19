@@ -2,7 +2,7 @@ from pydantic import BaseModel as PydanticBaseModel, ConstrainedList
 from types import NoneType
 from typing import Annotated, List, Literal, TypeVar, Union, get_args, get_origin
 
-from .template import Expr, Template, TemplateList
+from .template import Expr, Template, CompositeTemplate, IterableTemplate
 
 AnyBaseModel = TypeVar("AnyBaseModel", bound="BaseModel")
 
@@ -53,7 +53,9 @@ class BaseModel(PydanticBaseModel):
         example = cls.example()
         sub_templates = {}
         for k, v in kwargs.items():
-            if isinstance(v, Union[list, Expr, Template, TemplateList]):
+            if isinstance(
+                v, Union[list, Expr, Template, CompositeTemplate, IterableTemplate]
+            ):
                 sub_templates[k] = v
             else:
                 example.__setattr__(k, v)
