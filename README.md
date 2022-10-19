@@ -46,35 +46,43 @@ class MyHandler(Handler):
 
 ## Template
 
-You can create `Template` and assign values later. `Template` is `render(**kwargs)` ed by passing binding arguments and corresponding `Expr` expressions are evaluated with those bindings.
-
-On the otherhand, dynamic-size list can be created using `TemplateList`. Instantiating with `iterable: Expr`, `name: str`, `template: Template`, when `iterable` is evaluated to the items, each item is passed to `template` as `name` declared.
+`Expr` is simple string class which would be evaluated with given bindings.
 
 ```python
-from ezslack.schema import Expr, Option, StaticSelect, TemplateList, Text
+from ezslack.schema import Expr
 
-select_menu_template = StaticSelect.template(
-    options=TemplateList(
-        Expr("options"),
-        "option",
-        Option.template(
-            text=Text.template(type="plain_text", text=Expr("option['text']")),
-            value=Expr("option['value']"),
-        ),
-    )
+Expr("data").eval(globals={}, locals={"data": "value"})  # => "value"
+```
+
+You can create `Template` from `BaseModel` and assign values later. `Template` is `render(**locals)` ed by passing binding arguments, then corresponding `Expr` expressions are evaluated with those bindings.
+
+Complex template can be achived with `ConditionalTemplate`, `CompositeTemplate`, `IterableTemplate`.
+
+`ConditionalTemplate` is rendered same as `Template` or `None` whether condition is evaluated into `True`.
+
+`CompositeTemplate` consists of list of `Template`, `ConditionalTemplate`, `CompositeTemplate`. Simply adding those components would return `CompositeTemplate`.
+
+`IterableTemplate` is rendered into dynamic-size list. When `iterable` is evaluated to the list of values, each value is passed to `template` as `name` declared.
+
+```python
+from ezslack.schema import Expr, BaseModel, IterableTemplate
+
+class Text(BaseModel):
+    text: str
+
+first_name_template = Text.template(text=Expr("data['first_name']"))
+middle_name_template = Text.template(text=Expr("data['middle_name']")).with_condition(
+    Expr("'middle_name' in data")
 )
-
-select_menu = select_menu_template.render(
-    options=[
-        {"text": "text1", "value": "value1"},
-        {"text": "text2", "value": "value2"},
+last_name_template = Text.template(text=Expr("data['last_name']"))
+name_template = first_name_template + middle_name_template + last_name_template
+people_template = IterableTemplate(Expr("people"), "data", name_template)
+people_template.render(
+    people=[
+        {"first_name": "John", "last_name": "Smith"},
+        {"first_name": "heung", "middle_name": "min", "last_name": "Son"},
     ]
-) # => StaticSelect(
-#   options=[
-#       Option(text=Text(type="plain_text", text="text1), value="value1"),
-#       Option(text=Text(type="plain_text", text="text1), value="value1"),
-#   ]
-#)
+)  # => [[Text(text='John'), Text(text='Smith')], [Text(text='heung'), Text(text='min'), Text(text='Son')]]
 ```
 
 ## Supported features

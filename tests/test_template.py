@@ -1,6 +1,11 @@
 from unittest import TestCase
 
-from ezslack.schema import Expr, CompositeTemplate, IterableTemplate
+from ezslack.schema import (
+    Expr,
+    CompositeTemplate,
+    ConditionalTemplate,
+    IterableTemplate,
+)
 from tests.schema import Either, Menu, Text
 
 
@@ -13,7 +18,7 @@ class TemplateTest(TestCase):
     def test_render_template(self):
         text_template = Text.template(text=Expr("data['text']"))
         text = text_template.render(data={"text": "ezslack"})
-        self.assertEqual(Text(type="plain_text", text="ezslack"), text)
+        self.assertEqual(Text(text="ezslack"), text)
 
     def test_render_list(self):
         menu_template = Menu.template(
@@ -36,61 +41,96 @@ class TemplateTest(TestCase):
         text_template = Text.template(text=Expr("data['text']"))
         text_template.update_locals(data={"text": "ezslack"})
         text = text_template.render()
-        self.assertEqual(Text(type="plain_text", text="ezslack"), text)
+        self.assertEqual(Text(text="ezslack"), text)
 
-    def test_add_two_templates(self):
-        first_name_template = Text.template(text=Expr("data['first_name']"))
-        last_name_template = Text.template(text=Expr("data['last_name']"))
-        name_template = CompositeTemplate([first_name_template, last_name_template])
-        self.assertEqual(name_template, first_name_template + last_name_template)
-
-    def test_add_template_and_composite_template(self):
-        first_name_template = Text.template(text=Expr("data['first_name']"))
-        last_name_template = Text.template(text=Expr("data['last_name']"))
-        name_template = CompositeTemplate([first_name_template, last_name_template])
-        email_template = Text.template(text=Expr("data['email']"))
+    def test_template_with_condition(self):
+        text_template = Text.template(text=Expr("data['text']"))
+        with_condition = text_template.with_condition(Expr("condition"))
         self.assertEqual(
-            CompositeTemplate(
-                [first_name_template, last_name_template, email_template]
-            ),
-            name_template + email_template,
-        )
-        self.assertEqual(
-            CompositeTemplate(
-                [email_template, first_name_template, last_name_template]
-            ),
-            email_template + name_template,
-        )
-
-    def test_render_composite_template(self):
-        first_name_template = Text.template(text=Expr("data['first_name']"))
-        last_name_template = Text.template(text=Expr("data['last_name']"))
-        name_template = CompositeTemplate([first_name_template, last_name_template])
-        name = name_template.render(data={"first_name": "first", "last_name": "last"})
-        self.assertEqual(
-            [
-                Text(type="plain_text", text="first"),
-                Text(type="plain_text", text="last"),
-            ],
-            name,
+            ConditionalTemplate(Expr("condition"), text_template), with_condition
         )
 
     def test_template_to_iterable_template(self):
         template = Text.template(text=Expr("value"))
-        iterable_template = template.to_iterable_template("texts", "value", True)
+        iterable_template = template.to_iterable_template(Expr("texts"), "value", True)
         self.assertEqual(
-            IterableTemplate("texts", "value", Text.template(text=Expr("value")), True),
+            IterableTemplate(
+                Expr("texts"), "value", Text.template(text=Expr("value")), True
+            ),
             iterable_template,
+        )
+
+    def test_add_template_and_condition_template_and_composite_template(self):
+        first_name_template = Text.template(text=Expr("data['first_name']"))
+        middle_name_template = Text.template(
+            text=Expr("data['middle_name']")
+        ).with_condition(Expr("'middle_name' in data"))
+        last_name_template = Text.template(text=Expr("data['last_name']"))
+        name_template = first_name_template + middle_name_template + last_name_template
+        email_template = Text.template(text=Expr("data['email']"))
+        profile_template = name_template + email_template
+        self.assertEqual(
+            CompositeTemplate(
+                [
+                    first_name_template,
+                    middle_name_template,
+                    last_name_template,
+                    email_template,
+                ]
+            ),
+            profile_template,
+        )
+
+    def test_render_conditional_template(self):
+        text_template = ConditionalTemplate(
+            Expr("condition"), Text.template(text=Expr("data"))
+        )
+        with_condition = text_template.render(data="ezslack", condition=True)
+        without_condition = text_template.render(data="ezslack", condition=False)
+        self.assertEqual(with_condition, Text(text="ezslack"))
+        self.assertEqual(without_condition, None)
+
+    def test_render_composite_template(self):
+        first_name_template = Text.template(text=Expr("data['first_name']"))
+        middle_name_template = Text.template(
+            text=Expr("data['middle_name']")
+        ).with_condition(Expr("'middle_name' in data"))
+        last_name_template = Text.template(text=Expr("data['last_name']"))
+        name_template = CompositeTemplate(
+            [first_name_template, middle_name_template, last_name_template]
+        )
+
+        short_name = name_template.render(
+            data={"first_name": "first", "last_name": "last"}
+        )
+        self.assertEqual(
+            [
+                Text(text="first"),
+                Text(text="last"),
+            ],
+            short_name,
+        )
+
+        long_name = name_template.render(
+            data={"first_name": "first", "middle_name": "middle", "last_name": "last"}
+        )
+        self.assertEqual(
+            [
+                Text(text="first"),
+                Text(text="middle"),
+                Text(text="last"),
+            ],
+            long_name,
         )
 
     def test_composite_template_to_iterable_template(self):
         composite_template = CompositeTemplate([Text.template(text=Expr("value"))])
         iterable_text_template = composite_template.to_iterable_template(
-            "texts", "value", True
+            Expr("texts"), "value", True
         )
         self.assertEqual(
             IterableTemplate(
-                "texts",
+                Expr("texts"),
                 "value",
                 CompositeTemplate([Text.template(text=Expr("value"))]),
                 True,

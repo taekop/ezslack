@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from pydantic import BaseModel as PydanticBaseModel, validate_model
 from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
@@ -10,25 +11,39 @@ class Expr(str):
         return eval(self, globals, locals)
 
 
-def _render(obj, **locals) -> Tuple[Any, bool]:
+class TemplateBase(metaclass=ABCMeta):
+    @abstractmethod
+    def render(self, **locals) -> Any:
+        pass
+
+
+def _render(obj: Any, **locals) -> Tuple[Any, bool]:
     if isinstance(obj, list):
-        return (_render_list(obj, **locals), False)
+        return (_render_list(obj, None, **locals), False)
     elif isinstance(obj, Expr):
         return (obj.eval(None, locals), False)
     elif isinstance(obj, Template):
         return (obj.render(**locals), False)
+    elif isinstance(obj, ConditionalTemplate):
+        return (obj.render(**locals), False)
     elif isinstance(obj, CompositeTemplate):
-        return (obj.render(**locals), True)
+        return (obj.render(**locals), obj.flat)
     elif isinstance(obj, IterableTemplate):
         return (obj.render(**locals), obj.flat)
     else:
         return (obj, False)
 
 
-def _render_list(items, **locals) -> List[Any]:
+def _render_list(
+    items: List[Any], locals_per_item: Optional[List[Dict[str, Any]]] = None, **locals
+) -> List[Any]:
     output = []
-    for item in items:
-        _output, flat = _render(item, **locals)
+    if locals_per_item is None:
+        locals_per_item = [{}] * len(items)
+    for item, additional_locals in zip(items, locals_per_item):
+        _output, flat = _render(item, **locals, **additional_locals)
+        if _output is None and isinstance(item, ConditionalTemplate):
+            continue
         if flat:
             output += _output
         else:
@@ -40,7 +55,7 @@ T = TypeVar("T", bound=PydanticBaseModel)
 
 
 @dataclass
-class Template(Generic[T]):
+class Template(Generic[T], TemplateBase):
     example: T
     locals: Dict[str, Any]
     sub_templates: Dict[str, Any]
@@ -60,35 +75,54 @@ class Template(Generic[T]):
     def update_locals(self, **locals):
         self.locals.update(locals)
 
+    def with_condition(self, condition: Expr):
+        return ConditionalTemplate(condition, self)
+
     def to_iterable_template(
         self, iterable: Expr, name: str, flat: bool
     ) -> IterableTemplate:
         return IterableTemplate(iterable, name, self, flat)
 
     def __add__(self, other) -> CompositeTemplate:
-        if isinstance(other, Template):
-            return CompositeTemplate([self, other])
-        elif isinstance(other, CompositeTemplate):
-            return CompositeTemplate([self] + other.templates)
+        if isinstance(other, CompositeTemplate):
+            return CompositeTemplate([self] + other.renderables)
         else:
-            raise TypeError(
-                f"unsupported operand type(s) for +: '{self.__class__}' and '{type(other)}'"
-            )
+            return CompositeTemplate([self, other])
 
 
 @dataclass
-class CompositeTemplate:
-    templates: List[Union[Template, CompositeTemplate]]
+class ConditionalTemplate(TemplateBase):
+    condition: Expr
+    renderable: Any
+
+    def render(self, **locals) -> Any:
+        if self.condition.eval(None, locals):
+            return _render(self.renderable, **locals)[0]
+        else:
+            return None
+
+    def with_condition(self, condition: Expr):
+        return ConditionalTemplate(condition, self)
+
+    def to_iterable_template(
+        self, iterable: Expr, name: str, flat: bool
+    ) -> IterableTemplate:
+        return IterableTemplate(iterable, name, self, flat)
+
+    def __add__(self, other) -> CompositeTemplate:
+        if isinstance(other, CompositeTemplate):
+            return CompositeTemplate([self] + other.renderables)
+        else:
+            return CompositeTemplate([self, other])
+
+
+@dataclass
+class CompositeTemplate(TemplateBase):
+    renderables: List[Any]
+    flat: bool = False
 
     def render(self, **locals) -> List[Any]:
-        output = []
-        for template in self.templates:
-            _output, flat = _render(template, **locals)
-            if flat:
-                output += _output
-            else:
-                output.append(_output)
-        return output
+        return _render_list(self.renderables, None, **locals)
 
     def to_iterable_template(
         self, iterable: Expr, name: str, flat: bool
@@ -96,29 +130,27 @@ class CompositeTemplate:
         return IterableTemplate(iterable, name, self, flat)
 
     def __add__(self, other) -> CompositeTemplate:
-        if isinstance(other, Template):
-            return CompositeTemplate(self.templates + [other])
-        elif isinstance(other, CompositeTemplate):
-            return CompositeTemplate(self.templates + other.templates)
+        if isinstance(other, CompositeTemplate):
+            return CompositeTemplate(self.renderables + other.renderables)
         else:
-            raise TypeError(
-                f"unsupported operand type(s) for +: '{self.__class__}' and '{type(other)}'"
-            )
+            return CompositeTemplate(self.renderables + [other])
 
 
 @dataclass
-class IterableTemplate:
+class IterableTemplate(TemplateBase):
     iterable: Expr
     name: str
-    template: Union[Template, CompositeTemplate]
-    flat: bool
+    renderable: Any
+    flat: bool = False
 
     def render(self, **locals) -> List[Any]:
-        output = []
-        for item in self.iterable.eval(None, locals):
-            _output, flat = _render(self.template, **locals, **{self.name: item})
-            if flat:
-                output += _output
-            else:
-                output.append(_output)
-        return output
+        values = self.iterable.eval(None, locals)
+        renderables = [self.renderable] * len(values)
+        locals_per_item = [{self.name: value} for value in values]
+        return _render_list(renderables, locals_per_item, **locals)
+
+    def __add__(self, other) -> CompositeTemplate:
+        if isinstance(other, CompositeTemplate):
+            return CompositeTemplate([self] + other.renderables)
+        else:
+            return CompositeTemplate([self, other])
