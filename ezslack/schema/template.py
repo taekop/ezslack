@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pydantic import BaseModel as PydanticBaseModel, validate_model
 from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
@@ -57,8 +57,8 @@ T = TypeVar("T", bound=PydanticBaseModel)
 @dataclass
 class Template(Generic[T], TemplateBase):
     example: T
-    locals: Dict[str, Any]
     sub_templates: Dict[str, Any]
+    locals: Dict[str, Any] = field(default_factory=dict)
 
     def render(self, **locals) -> T:
         locals.update(self.locals)
@@ -74,6 +74,7 @@ class Template(Generic[T], TemplateBase):
 
     def update_locals(self, **locals):
         self.locals.update(locals)
+        return self
 
     def with_condition(self, condition: Expr):
         return ConditionalTemplate(condition, self)
@@ -94,12 +95,17 @@ class Template(Generic[T], TemplateBase):
 class ConditionalTemplate(TemplateBase):
     condition: Expr
     renderable: Any
+    locals: Dict[str, Any] = field(default_factory=dict)
 
     def render(self, **locals) -> Any:
         if self.condition.eval(None, locals):
             return _render(self.renderable, **locals)[0]
         else:
             return None
+
+    def update_locals(self, **locals):
+        self.locals.update(locals)
+        return self
 
     def with_condition(self, condition: Expr):
         return ConditionalTemplate(condition, self)
@@ -120,9 +126,17 @@ class ConditionalTemplate(TemplateBase):
 class CompositeTemplate(TemplateBase):
     renderables: List[Any]
     flat: bool = False
+    locals: Dict[str, Any] = field(default_factory=dict)
 
     def render(self, **locals) -> List[Any]:
         return _render_list(self.renderables, None, **locals)
+
+    def update_locals(self, **locals):
+        self.locals.update(locals)
+        return self
+
+    def with_condition(self, condition: Expr):
+        return ConditionalTemplate(condition, self)
 
     def to_iterable_template(
         self, iterable: Expr, name: str, flat: bool
@@ -142,12 +156,20 @@ class IterableTemplate(TemplateBase):
     name: str
     renderable: Any
     flat: bool = False
+    locals: Dict[str, Any] = field(default_factory=dict)
 
     def render(self, **locals) -> List[Any]:
         values = self.iterable.eval(None, locals)
         renderables = [self.renderable] * len(values)
         locals_per_item = [{self.name: value} for value in values]
         return _render_list(renderables, locals_per_item, **locals)
+
+    def update_locals(self, **locals):
+        self.locals.update(locals)
+        return self
+
+    def with_condition(self, condition: Expr):
+        return ConditionalTemplate(condition, self)
 
     def __add__(self, other) -> CompositeTemplate:
         if isinstance(other, CompositeTemplate):
