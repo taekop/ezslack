@@ -131,6 +131,14 @@ class CompositeTemplate(TemplateBase):
     def render(self, **locals) -> List[Any]:
         return _render_list(self.renderables, None, **locals)
 
+    def flatten(self) -> CompositeTemplate:
+        self.flat = True
+        return self
+
+    def unflatten(self) -> CompositeTemplate:
+        self.flat = False
+        return self
+
     def update_locals(self, **locals):
         self.locals.update(locals)
         return self
@@ -163,6 +171,14 @@ class IterableTemplate(TemplateBase):
         renderables = [self.renderable] * len(values)
         locals_per_item = [{self.name: value} for value in values]
         return _render_list(renderables, locals_per_item, **locals)
+
+    def flatten(self) -> IterableTemplate:
+        self.flat = True
+        return self
+
+    def unflatten(self) -> IterableTemplate:
+        self.flat = False
+        return self
 
     def update_locals(self, **locals):
         self.locals.update(locals)
