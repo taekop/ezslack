@@ -6,7 +6,7 @@ import re
 from slack_bolt import Ack, Respond, Say
 from slack_sdk.web import WebClient
 from slack_sdk.models.views import ViewState
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from .types import RequestType
 
@@ -57,6 +57,7 @@ class Handler:
     channel_id: Optional[str]
     channel_name: Optional[str]
     message_ts: Optional[str]
+    private_metadata: Optional[str]
     thread_ts: Optional[str]
     trigger_id: Optional[str]
     user_id: str
