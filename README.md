@@ -49,19 +49,20 @@ Events supported: `ACTION`, `MESSAGE`, `VIEW_SUBMISSION`, `VIEW_CLOSED`
 
 Each event has a request id like `action_id`, `message.text`, `callback_id`, `callback_id`. When a request id matches handling method's regular expression, handler instance with context fields call the method with matched groups as arguments.
 
-|     field      |       type       |                                         description                                          |                   event                    |
-| :------------: | :--------------: | :------------------------------------------------------------------------------------------: | :----------------------------------------: |
-|  `request_id`  |      `str`       | Identifier such as `action_id`, `message.text`, `callback_id` which is used to match handler |                     -                      |
-| `request_type` |  `RequestType`   |            event type enum: `ACTION`, `MESSAGE`, `VIEW_SUBMISSION`, `VIEW_CLOSED`            |                     -                      |
-|     `ack`      |      `Ack`       |        See [Reference](https://github.com/slackapi/bolt-python#making-things-happen)         |                     -                      |
-|     `body`     | `Dict[str, Any]` |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
-|    `client`    |   `WebClient`    |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
-|   `respond`    |    `Respond`     |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
-|     `say`      |      `Say`       |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
-|  `channel_id`  | `Optional[str]`  |                            Channel where the event was triggered                             |            `ACTION`, `MESSAGE`             |
-| `channel_name` | `Optional[str]`  |                            Channel where the event was triggered                             |                 `MESSAGE`                  |
-|  `message_ts`  | `Optional[str]`  |                                   Timestamp of the message                                   |            `ACTION`, `MESSAGE`             |
-|  `thread_ts`   | `Optional[str]`  |                                   Timestamp of the thread                                    |            `ACTION`, `MESSAGE`             |
-|  `trigger_id`  | `Optional[str]`  |                                  Trigger id from the event                                   |                  `ACTION`                  |
-|   `user_id`    |      `str`       |                                 User who triggers the event                                  |                     -                      |
-|  `user_name`   | `Optional[str]`  |                                 User who triggers the event                                  | `ACTION`, `VIEW_SUBMISSION`, `VIEW_CLOSED` |
+|     field      |         type          |                                         description                                          |                   event                    |
+| :------------: | :-------------------: | :------------------------------------------------------------------------------------------: | :----------------------------------------: |
+|  `request_id`  |         `str`         | Identifier such as `action_id`, `message.text`, `callback_id` which is used to match handler |                     -                      |
+| `request_type` |     `RequestType`     |            event type enum: `ACTION`, `MESSAGE`, `VIEW_SUBMISSION`, `VIEW_CLOSED`            |                     -                      |
+|     `ack`      |         `Ack`         |        See [Reference](https://github.com/slackapi/bolt-python#making-things-happen)         |                     -                      |
+|     `body`     |   `Dict[str, Any]`    |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
+|    `client`    |      `WebClient`      |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
+|   `respond`    |       `Respond`       |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
+|     `say`      |         `Say`         |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
+|  `channel_id`  |    `Optional[str]`    |                            Channel where the event was triggered                             |            `ACTION`, `MESSAGE`             |
+| `channel_name` |    `Optional[str]`    |                            Channel where the event was triggered                             |                 `MESSAGE`                  |
+|  `message_ts`  |    `Optional[str]`    |                                   Timestamp of the message                                   |            `ACTION`, `MESSAGE`             |
+|  `thread_ts`   |    `Optional[str]`    |                                   Timestamp of the thread                                    |            `ACTION`, `MESSAGE`             |
+|  `trigger_id`  |    `Optional[str]`    |                                  Trigger id from the event                                   |                  `ACTION`                  |
+|   `user_id`    |         `str`         |                                 User who triggers the event                                  |                     -                      |
+|  `user_name`   |    `Optional[str]`    |                                 User who triggers the event                                  | `ACTION`, `VIEW_SUBMISSION`, `VIEW_CLOSED` |
+|  `view_state`  | `Optional[ViewState]` |                             View state which has selected values                             |     ``VIEW_SUBMISSION`, `VIEW_CLOSED`      |

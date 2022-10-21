@@ -5,6 +5,7 @@ import functools
 import re
 from slack_bolt import Ack, Respond, Say
 from slack_sdk.web import WebClient
+from slack_sdk.models.views import ViewState
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from .types import RequestType
@@ -60,6 +61,7 @@ class Handler:
     trigger_id: Optional[str]
     user_id: str
     user_name: Optional[str]
+    view_state: Optional[ViewState]
 
     def __init_subclass__(cls):
         super().__init_subclass__()

@@ -2,6 +2,7 @@ import re
 from typing import Optional, Tuple
 from slack_bolt import App as SlackBoltApp
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from slack_sdk.models.views import ViewState
 
 from .handler import HANDLER_REGISTRY
 from .types import RequestType
@@ -27,6 +28,7 @@ def extract_body_fields(
     Optional[str],
     str,
     Optional[str],
+    Optional[ViewState],
 ]:
     match request_type:
         case RequestType.ACTION:
@@ -37,6 +39,7 @@ def extract_body_fields(
             trigger_id = body["trigger_id"]
             user_id = body["user"]["id"]
             user_name = body["user"]["name"]
+            view_state = None
         case RequestType.MESSAGE:
             channel_id = body["event"]["channel"]
             channel_name = None
@@ -45,6 +48,7 @@ def extract_body_fields(
             trigger_id = None
             user_id = body["event"]["user"]
             user_name = None
+            view_state = None
         case _:
             channel_id = None
             channel_name = None
@@ -53,6 +57,7 @@ def extract_body_fields(
             trigger_id = None
             user_id = body["user"]["id"]
             user_name = body["user"]["name"]
+            view_state = ViewState(**body["view"]["state"])
     return (
         channel_id,
         channel_name,
@@ -61,6 +66,7 @@ def extract_body_fields(
         trigger_id,
         user_id,
         user_name,
+        view_state,
     )
 
 
