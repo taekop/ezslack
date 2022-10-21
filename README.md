@@ -61,7 +61,8 @@ Each event has a request id like `action_id`, `message.text`, `callback_id`, `ca
 |    `channel_id`    |    `Optional[str]`    |                            Channel where the event was triggered                             |            `ACTION`, `MESSAGE`             |
 |   `channel_name`   |    `Optional[str]`    |                            Channel where the event was triggered                             |                 `MESSAGE`                  |
 |    `message_ts`    |    `Optional[str]`    |                                   Timestamp of the message                                   |            `ACTION`, `MESSAGE`             |
-| `private_metadata` |    `Optional[str]`    |                                   Private metadat in view                                    |      `VIEW_SUBMISSION`, `VIEW_CLOSED`      |
+|     `metadata`     | `Optional[Metadata]`  |                                   Metadata of the message                                    |                  `ACTION`                  |
+| `private_metadata` |    `Optional[str]`    |                                 Private metadata of the view                                 |      `VIEW_SUBMISSION`, `VIEW_CLOSED`      |
 |    `thread_ts`     |    `Optional[str]`    |                                   Timestamp of the thread                                    |            `ACTION`, `MESSAGE`             |
 |    `trigger_id`    |    `Optional[str]`    |                                  Trigger id from the event                                   |                  `ACTION`                  |
 |     `user_id`      |         `str`         |                                 User who triggers the event                                  |                     -                      |

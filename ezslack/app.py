@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, Tuple
 from slack_bolt import Ack, App as SlackBoltApp, Respond, Say
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_sdk import WebClient
+from slack_sdk.models.metadata import Metadata
 from slack_sdk.models.views import ViewState
 
 from .handler import HANDLER_REGISTRY
@@ -33,6 +34,7 @@ def extract_body_fields(
     Optional[str],
     Optional[str],
     Optional[str],
+    Optional[Metadata],
     Optional[str],
     Optional[str],
     Optional[str],
@@ -45,6 +47,11 @@ def extract_body_fields(
             channel_id = body["channel"]["id"]
             channel_name = body["channel"]["name"]
             message_ts = body["container"]["message_ts"]
+            metadata = (
+                Metadata(**body["message"]["metadata"])
+                if "metadata" in body["message"]
+                else None
+            )
             private_metadata = None
             thread_ts = body["container"].get("thread_ts") or body["container"]["ts"]
             trigger_id = body["trigger_id"]
@@ -55,6 +62,7 @@ def extract_body_fields(
             channel_id = body["event"]["channel"]
             channel_name = None
             message_ts = body["event"]["ts"]
+            metadata = None
             private_metadata = None
             thread_ts = body["event"].get("thread_ts") or message_ts
             trigger_id = None
@@ -65,6 +73,7 @@ def extract_body_fields(
             channel_id = None
             channel_name = None
             message_ts = None
+            metadata = None
             private_metadata = body["view"]["private_metadata"]
             thread_ts = None
             trigger_id = None
@@ -75,6 +84,7 @@ def extract_body_fields(
         channel_id,
         channel_name,
         message_ts,
+        metadata,
         private_metadata,
         thread_ts,
         trigger_id,

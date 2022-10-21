@@ -5,6 +5,7 @@ import functools
 import re
 from slack_bolt import Ack, Respond, Say
 from slack_sdk.web import WebClient
+from slack_sdk.models.metadata import Metadata
 from slack_sdk.models.views import ViewState
 from typing import Any, Dict, List, Optional, Tuple, Type
 
@@ -57,6 +58,7 @@ class Handler:
     channel_id: Optional[str]
     channel_name: Optional[str]
     message_ts: Optional[str]
+    metadata: Optional[Metadata]
     private_metadata: Optional[str]
     thread_ts: Optional[str]
     trigger_id: Optional[str]
