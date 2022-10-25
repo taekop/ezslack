@@ -77,7 +77,6 @@ def handle(request_type: RequestType, *args):
         def wrapper(*args, **kwargs):
             return function(*args, **kwargs)
 
-        nonlocal args
         keywords = []
         for keyword in args:
             if isinstance(keyword, str):
