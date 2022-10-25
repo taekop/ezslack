@@ -1,4 +1,5 @@
 import re
+from dataclasses import asdict
 from typing import Any, Dict, Optional, Tuple
 from slack_bolt import Ack, App as SlackBoltApp, Respond, Say
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -7,7 +8,7 @@ from slack_sdk.models.metadata import Metadata
 from slack_sdk.models.views import ViewState
 
 from .handler import HANDLER_REGISTRY
-from .types import RequestType
+from .types import BodyFields, RequestType
 
 
 def extract_request_id(
@@ -28,20 +29,7 @@ def extract_request_id(
             return view["callback_id"]
 
 
-def extract_body_fields(
-    request_type: RequestType, body: Dict[str, Any]
-) -> Tuple[
-    Optional[str],
-    Optional[str],
-    Optional[str],
-    Optional[Metadata],
-    Optional[str],
-    Optional[str],
-    Optional[str],
-    str,
-    Optional[str],
-    Optional[ViewState],
-]:
+def extract_body_fields(request_type: RequestType, body: Dict[str, Any]) -> BodyFields:
     match request_type:
         case RequestType.ACTION:
             channel_id = body["channel"]["id"]
@@ -80,7 +68,7 @@ def extract_body_fields(
             user_id = body["user"]["id"]
             user_name = body["user"]["name"]
             view_state = ViewState(**body["view"]["state"])
-    return (
+    return BodyFields(
         channel_id,
         channel_name,
         message_ts,
@@ -109,11 +97,18 @@ def route(request_type: RequestType):
         if handler_mtd_args := HANDLER_REGISTRY.search_handler(
             request_type, request_id
         ):
-            fields = extract_body_fields(request_type, body)
+            body_fields = extract_body_fields(request_type, body)
 
             handler, mtd, args, kwargs = handler_mtd_args
             handler_instance = handler(
-                request_id, request_type, ack, body, client, respond, say, *fields
+                request_id,
+                request_type,
+                ack,
+                body,
+                client,
+                respond,
+                say,
+                **asdict(body_fields),
             )
             getattr(handler_instance, mtd)(*args, **kwargs)
 
