@@ -13,6 +13,7 @@ from ezslack import App
 # Running over HTTP
 app = App(token=SLACK_BOT_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
 app.start(PORT)
+
 # Running in Socket Mode
 app = App(token=SLACK_BOT_TOKEN)
 app.start_socket_mode(SLACK_APP_TOKEN)
@@ -20,7 +21,7 @@ app.start_socket_mode(SLACK_APP_TOKEN)
 
 ## Handler
 
-Whenever subclass of `Handler` is defined, handler methods are registered in [`HANDLER_REGISTRY`](ezslack/handler.py#L44). String arguments in handler decorator are automatically converted into regex pattern with anchors. Matched groups are passed to arguments and keyword arguments whether they are named.
+Whenever subclass of [`Handler`](ezslack/handler/handler.py) is defined, handler methods are registered in [`REGISTRIES`](ezslack/handler/registry.py#L33). String arguments in handler decorator are automatically converted into regex pattern with anchors. Matched groups are passed to arguments and keyword arguments whether they are named.
 
 ```python
 from ezslack import Handler, message
@@ -45,16 +46,13 @@ class MyHandler(Handler):
 
 ## Supported features
 
-Events supported: `ACTION`, `MESSAGE`, `VIEW_SUBMISSION`, `VIEW_CLOSED`
+Requests supported: `ACTION`, `MESSAGE`, `VIEW_CLOSED`, `VIEW_SUBMISSION`
 
-Each event has a request id like `action_id`, `message.text`, `callback_id`, `callback_id`. When a request id matches handling method's regular expression, handler instance with context fields call the method with matched groups as arguments.
+Each request has an id such as `action_id`, `message.text`, `callback_id`. When a request id matches handling method's regex pattern, handler is instantiated with the following context fields, then call the method.
 
 |       field        |         type          |                                         description                                          |                   event                    |
 | :----------------: | :-------------------: | :------------------------------------------------------------------------------------------: | :----------------------------------------: |
-|    `request_id`    |         `str`         | Identifier such as `action_id`, `message.text`, `callback_id` which is used to match handler |                     -                      |
-|   `request_type`   |     `RequestType`     |            event type enum: `ACTION`, `MESSAGE`, `VIEW_SUBMISSION`, `VIEW_CLOSED`            |                     -                      |
 |       `ack`        |         `Ack`         |        See [Reference](https://github.com/slackapi/bolt-python#making-things-happen)         |                     -                      |
-|       `body`       |   `Dict[str, Any]`    |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
 |      `client`      |      `WebClient`      |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
 |     `respond`      |       `Respond`       |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
 |       `say`        |         `Say`         |        See  [Reference](https://github.com/slackapi/bolt-python#making-things-happen)        |                     -                      |
@@ -63,8 +61,9 @@ Each event has a request id like `action_id`, `message.text`, `callback_id`, `ca
 |    `message_ts`    |    `Optional[str]`    |                                   Timestamp of the message                                   |            `ACTION`, `MESSAGE`             |
 |     `metadata`     | `Optional[Metadata]`  |                                   Metadata of the message                                    |                  `ACTION`                  |
 | `private_metadata` |    `Optional[str]`    |                                 Private metadata of the view                                 |      `VIEW_SUBMISSION`, `VIEW_CLOSED`      |
+|    `request_id`    |         `str`         | Identifier such as `action_id`, `message.text`, `callback_id` which is used to match handler |                     -                      |
 |    `thread_ts`     |    `Optional[str]`    |                                   Timestamp of the thread                                    |            `ACTION`, `MESSAGE`             |
 |    `trigger_id`    |    `Optional[str]`    |                                  Trigger id from the event                                   |                  `ACTION`                  |
 |     `user_id`      |         `str`         |                                 User who triggers the event                                  |                     -                      |
 |    `user_name`     |    `Optional[str]`    |                                 User who triggers the event                                  | `ACTION`, `VIEW_SUBMISSION`, `VIEW_CLOSED` |
-|    `view_state`    | `Optional[ViewState]` |                             View state which has selected values                             |     ``VIEW_SUBMISSION`, `VIEW_CLOSED`      |
+|    `view_state`    | `Optional[ViewState]` |                             View state which has selected values                             |      `VIEW_SUBMISSION`, `VIEW_CLOSED`      |
