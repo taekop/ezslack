@@ -17,9 +17,9 @@ def handle(registry: HandlerRegistry, *args):
                 keyword = re.compile("^" + keyword + "$")
             keywords.append(keyword)
 
-        wrapper._handle = [(registry, keyword) for keyword in keywords]
+        wrapper._handle = [(registry, keyword) for keyword in keywords] # type: ignore
         if _handle := getattr(function, "_handle", None):
-            wrapper._handle += _handle
+            wrapper._handle += _handle # type: ignore
 
         return wrapper
 
