@@ -36,7 +36,7 @@ class Action(RequestBase):
     def _trigger_id(self) -> Optional[str]:
         return self.body["trigger_id"]
 
-    def _user_id(self) -> str:
+    def _user_id(self) -> Optional[str]:
         return self.body["user"]["id"]
 
     def _user_name(self) -> Optional[str]:

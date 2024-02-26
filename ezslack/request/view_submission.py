@@ -11,7 +11,7 @@ class ViewSubmission(RequestBase):
     def _request_id(self) -> str:
         return self.body["view"]["callback_id"]
 
-    def _user_id(self) -> str:
+    def _user_id(self) -> Optional[str]:
         return self.body["user"]["id"]
 
     def _user_name(self) -> Optional[str]:

@@ -64,6 +64,7 @@ Each request has an id such as `action_id`, `message.text`, `callback_id`. When 
 |    `request_id`    |         `str`         | Identifier such as `action_id`, `message.text`, `callback_id` which is used to match handler |                     -                      |
 |    `thread_ts`     |    `Optional[str]`    |                                   Timestamp of the thread                                    |            `ACTION`, `MESSAGE`             |
 |    `trigger_id`    |    `Optional[str]`    |                                  Trigger id from the event                                   |                  `ACTION`                  |
-|     `user_id`      |         `str`         |                                 User who triggers the event                                  |                     -                      |
+|     `user_id`      |    `Optional[str]`    |                                 User who triggers the event                                  |                     -                      |
 |    `user_name`     |    `Optional[str]`    |                                 User who triggers the event                                  | `ACTION`, `VIEW_SUBMISSION`, `VIEW_CLOSED` |
+|      `bot_id`      |    `Optional[str]`    |                                 Bot which triggers the event                                 |                 `MESSAGE`                  |
 |    `view_state`    | `Optional[ViewState]` |                             View state which has selected values                             |      `VIEW_SUBMISSION`, `VIEW_CLOSED`      |

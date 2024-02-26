@@ -23,8 +23,9 @@ class Handler:
     request_id: str
     thread_ts: Optional[str]
     trigger_id: Optional[str]
-    user_id: str
+    user_id: Optional[str]
     user_name: Optional[str]
+    bot_id: Optional[str]
     view_state: Optional[ViewState]
 
     def __init_subclass__(cls):

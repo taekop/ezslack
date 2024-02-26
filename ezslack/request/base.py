@@ -22,6 +22,7 @@ class RequestBase(ABC):
             "trigger_id": self._trigger_id(),
             "user_id": self._user_id(),
             "user_name": self._user_name(),
+            "bot_id": self._bot_id(),
             "view_state": self._view_state(),
         }
 
@@ -50,11 +51,13 @@ class RequestBase(ABC):
     def _trigger_id(self) -> Optional[str]:
         return None
 
-    @abstractmethod
-    def _user_id(self) -> str:
-        pass
+    def _user_id(self) -> Optional[str]:
+        return None
 
     def _user_name(self) -> Optional[str]:
+        return None
+
+    def _bot_id(self) -> Optional[str]:
         return None
 
     def _view_state(self) -> Optional[ViewState]:
